@@ -37,7 +37,11 @@ type FirewallRuleAttributes struct {
 	ZoneID      string   `json:"zone_id"`
 	Description string   `json:"description"`
 	Paused      string   `json:"paused"`
+<<<<<<< HEAD
 	Products    []string `json:"products,omitempty"`
+=======
+	Products    []string `json:"products"`
+>>>>>>> add products to firewall rule
 }
 
 func init() {
