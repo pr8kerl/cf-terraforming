@@ -95,11 +95,10 @@ var pageRuleCmd = &cobra.Command{
 				for _, action := range rule.Actions {
 
 					switch action.ID {
-						case "disable_security":
-							action.Value = 0
-						case "always_use_https":
-							action.Value = 0
-						}
+					case "disable_security":
+						action.Value = 0
+					case "always_use_https":
+						action.Value = 0
 					}
 
 					if action.ID == "cache_key_fields" {
