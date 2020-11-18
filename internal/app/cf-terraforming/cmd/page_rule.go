@@ -31,14 +31,14 @@ resource "cloudflare_page_rule" "page_rule_{{.Rule.ID}}" {
                     {{- if isSlice $v1 }}
                         {{ $k1 }} = [ {{ range $v1 }}"{{.}}", {{ end }} ]
 					{{- else }}
-					    {{- if ne $v1 "" }}
+					    {{- if $v1 }}
 						{{$k1}} = {{ quoteIfString $v1 }}
 						{{- end }}
                     {{- end }}
                 {{- end }}
                 }
             {{- else }}
-				{{- if ne $v "" }}
+				{{- if $v }}
                 {{$k}} = {{ quoteIfString $v }}
 				{{- end }}
             {{- end }}
