@@ -33,7 +33,7 @@ resource "cloudflare_page_rule" "page_rule_{{.Rule.ID}}" {
 					{{- else }}
 					    {{- if $v1 -}}
 						{{$k1}} = {{ quoteIfString $v1 }}
-						{{- end -}}
+						{{- end }}
                     {{- end }}
                 {{- end }}
                 }
