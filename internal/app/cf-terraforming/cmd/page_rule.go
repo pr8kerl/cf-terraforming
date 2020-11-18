@@ -94,6 +94,14 @@ var pageRuleCmd = &cobra.Command{
 				actionsProcessed := make([]cloudflare.PageRuleAction, 0)
 				for _, action := range rule.Actions {
 
+					switch action.ID {
+						case "disable_security":
+							action.Value = 0
+						case "always_use_https":
+							action.Value = 0
+						}
+					}
+
 					if action.ID == "cache_key_fields" {
 						for fieldID, fieldValue := range action.Value.(map[string]interface{}) {
 							if fieldID == "query_string" {
