@@ -96,9 +96,9 @@ var pageRuleCmd = &cobra.Command{
 
 					switch action.ID {
 					case "disable_security":
-						action.Value = 0
+						action.Value = 1
 					case "always_use_https":
-						action.Value = 0
+						action.Value = 1
 					}
 
 					if action.ID == "cache_key_fields" {
