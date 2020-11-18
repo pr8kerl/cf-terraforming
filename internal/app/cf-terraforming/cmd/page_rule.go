@@ -99,6 +99,8 @@ var pageRuleCmd = &cobra.Command{
 						action.Value = true
 					case "always_use_https":
 						action.Value = true
+					case "disable_apps":
+						action.Value = true
 					}
 
 					if action.ID == "cache_key_fields" {
