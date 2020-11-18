@@ -30,13 +30,17 @@ resource "cloudflare_page_rule" "page_rule_{{.Rule.ID}}" {
                 {{- range $k1, $v1 := $v}}
                     {{- if isSlice $v1 }}
                         {{ $k1 }} = [ {{ range $v1 }}"{{.}}", {{ end }} ]
-                    {{- else }}
-                        {{$k1}} = {{ quoteIfString $v1 -}}
+					{{- else }}
+					    {{- if $v1 -}}
+						{{$k1}} = {{ quoteIfString $v1 -}}
+						{{- end -}}
                     {{- end }}
                 {{- end }}
                 }
             {{- else }}
+				{{- if $v -}}
                 {{$k}} = {{ quoteIfString $v -}}
+				{{- end -}}
             {{- end }}
         {{- end }}
         }
