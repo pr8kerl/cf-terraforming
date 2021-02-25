@@ -44,6 +44,7 @@ func init() {
 	rootCmd.AddCommand(firewallRuleCmd)
 }
 
+// fix
 var firewallRuleCmd = &cobra.Command{
 	Use:   "firewall_rule",
 	Short: "Import Firewall Rule data into Terraform",
