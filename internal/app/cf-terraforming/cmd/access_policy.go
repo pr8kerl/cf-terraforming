@@ -23,6 +23,7 @@ resource "cloudflare_access_policy" "access_policy_{{.Policy.ID}}" {
 {{- if .Policy.Include }}
     include {
 {{- range $k, $v := .Policy.Include }}
+    "{{$k $v}}"
     {{- if isMap $v }}
         {{- range $k, $v := $v }}
 			{{- if eq $k "everyone" }}
