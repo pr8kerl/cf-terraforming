@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"reflect"
 
 	"strings"
 	"text/template"
@@ -11,6 +12,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
+
+type ParsedPolicyInclude struct {
+	Items []string
+	Id    string
+}
 
 const accessPolicyTemplate = `
 resource "cloudflare_access_policy" "access_policy_{{.Policy.ID}}" {
@@ -22,20 +28,33 @@ resource "cloudflare_access_policy" "access_policy_{{.Policy.ID}}" {
 
 {{- if .Policy.Include }}
     include {
-{{- range $k, $v := .Policy.Include }}
-      debug: {{ $k $v }}
-    {{- if isMap $v }}
-        {{- range $k, $v := $v }}
+  {{- if .ParsedPolicyInclude }}
+    {{- range $k, $v := .ParsedPolicyInclude }}
+	    {{- if eq $k "okta" }}
+			okta {
+				name = {{ $v.Items }}
+				identity_provider_id = "{{ $v.Id }}"
+			}
+		{{- end }}
+	    {{- if eq $k "email_domain" }}
+	      email_domain = {{ $v.Items }}
+		{{- end }}
+	{{- end }}
+  {{- else }}
+  {{- range $k, $v := .Policy.Include }}
+	{{- if isMap $v }}
+		{{- range $k, $v := $v }}
 			{{- if eq $k "everyone" }}
-			{{ $k }} = "true"
+				{{ $k }} = "true"
 			{{- else if eq $k "certificate" }}
-			{{ $k }} = true
+				{{ $k }} = true
 			{{- else }}
-            {{ $k }} =  {{if isMap $v }} [{{range $v}}"{{.}}",{{end}}]  {{else}} "{{ $v }}" {{end}}
+				{{ $k }} =  {{if isMap $v }} [ {{range $v}}"{{.}}",{{end}} ]  {{else}} "{{ $v }}" {{end}}
 			{{- end }}
-        {{- end }}
-    {{- end }}
-{{- end}}
+		{{- end }}
+	{{- end }}
+  {{- end}}
+  {{- end}}
     }
 {{- end }}
 
@@ -122,17 +141,83 @@ var accessPolicyCmd = &cobra.Command{
 	},
 }
 
+func accessPolicyIncludeParse(policy cloudflare.AccessPolicy) map[string]ParsedPolicyInclude {
+	m := make(map[string]ParsedPolicyInclude)
+	if len(policy.Include) == 0 {
+		return m
+	}
+
+	list := make([]string, 0, 5)
+	var id string
+	thisInclude := fmt.Sprintf("policy.Include %+v", policy.Include)
+	log.Info(thisInclude)
+
+	var includeKey string
+	for _, include := range policy.Include {
+		v := reflect.ValueOf(include)
+		if v.Kind() == reflect.Map {
+			for _, key := range v.MapKeys() {
+				includeKey = key.String()
+				if includeKey == "okta" {
+					val := v.MapIndex(key)
+					if val.Kind() == reflect.Interface {
+						iface := val.Interface()
+						myMap := iface.(map[string]interface{})
+						for d, e := range myMap {
+
+							if d == "identity_provider_id" {
+								id = fmt.Sprintf("%v", e)
+							}
+							if d == "name" {
+								list = append(list, fmt.Sprintf("\"%v\",", e))
+							}
+						}
+					}
+					pi := ParsedPolicyInclude{
+						Items: list,
+						Id:    id,
+					}
+					m["okta"] = pi
+				}
+				if includeKey == "email_domain" {
+					val := v.MapIndex(key)
+					if val.Kind() == reflect.Interface {
+						iface := val.Interface()
+						myMap := iface.(map[string]interface{})
+						for d, e := range myMap {
+							if d == "domain" {
+								list = append(list, fmt.Sprintf("\"%v\",", e))
+							}
+						}
+					}
+					pi := ParsedPolicyInclude{
+						Items: list,
+						Id:    "",
+					}
+					m["email_domain"] = pi
+				}
+			}
+		}
+	}
+
+	return m
+}
+
 func accessPolicyParse(app cloudflare.AccessApplication, policy cloudflare.AccessPolicy, zone cloudflare.Zone) {
 	tmpl := template.Must(template.New("access_policy").Funcs(templateFuncMap).Parse(accessPolicyTemplate))
+	formattedPolicyInclude := accessPolicyIncludeParse(policy)
+
 	err := tmpl.Execute(os.Stdout,
 		struct {
-			App    cloudflare.AccessApplication
-			Policy cloudflare.AccessPolicy
-			Zone   cloudflare.Zone
+			App                 cloudflare.AccessApplication
+			Policy              cloudflare.AccessPolicy
+			ParsedPolicyInclude map[string]ParsedPolicyInclude
+			Zone                cloudflare.Zone
 		}{
-			App:    app,
-			Policy: policy,
-			Zone:   zone,
+			App:                 app,
+			Policy:              policy,
+			ParsedPolicyInclude: formattedPolicyInclude,
+			Zone:                zone,
 		})
 	if err != nil {
 		log.Error(err)

@@ -6,8 +6,9 @@ services:
   build:
     image: golang:1.16-alpine
     entrypoint: sh
+    working_dir: /go/src/github.com/pr8kerl/cf-terraforming
     volumes:
-        - ".:/app"
+        - ".:/go/src/github.com/pr8kerl/cf-terraforming"
         - "/tmp:/tmp"
 
   cf-terraforming:

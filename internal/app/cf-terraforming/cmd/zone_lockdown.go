@@ -15,10 +15,10 @@ import (
 
 const zoneLockdownTemplate = `
 resource "cloudflare_zone_lockdown" "{{replace .Zone.Name "." "_"}}_{{.Lockdown.ID}}" {
-    zone_id = "{{.Zone.ID}}"
+	zone_id = "{{.Zone.ID}}"
 	description = "{{.Lockdown.Description}}"
-	paused = "{{.Lockdown.Paused}}"
-    urls = [
+	paused = {{.Lockdown.Paused}}
+	urls = [
 {{- range .Lockdown.URLs}}
         "{{.}}",
 {{- end}}
@@ -29,7 +29,6 @@ resource "cloudflare_zone_lockdown" "{{replace .Zone.Name "." "_"}}_{{.Lockdown.
       value  = "{{.Value}}"
     }
 {{- end}}
-    paused = {{.Lockdown.Paused}}
 }
 `
 
