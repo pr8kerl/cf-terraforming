@@ -39,6 +39,9 @@ resource "cloudflare_access_policy" "access_policy_{{.Policy.ID}}" {
 	    {{- if eq $k "email_domain" }}
 	      email_domain = {{ $v.Items }}
 		{{- end }}
+	    {{- if eq $k "email" }}
+	      email = {{ $v.Items }}
+		{{- end }}
 	{{- end }}
   {{- else }}
   {{- range $k, $v := .Policy.Include }}
@@ -195,6 +198,23 @@ func accessPolicyIncludeParse(policy cloudflare.AccessPolicy) map[string]ParsedP
 						Id:    "",
 					}
 					m["email_domain"] = pi
+				}
+				if includeKey == "email" {
+					val := v.MapIndex(key)
+					if val.Kind() == reflect.Interface {
+						iface := val.Interface()
+						myMap := iface.(map[string]interface{})
+						for d, e := range myMap {
+							if d == "email" {
+								list = append(list, fmt.Sprintf("\"%v\",", e))
+							}
+						}
+					}
+					pi := ParsedPolicyInclude{
+						Items: list,
+						Id:    "",
+					}
+					m["email"] = pi
 				}
 			}
 		}
